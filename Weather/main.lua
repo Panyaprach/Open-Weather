@@ -3,10 +3,48 @@ local json = require("json")
 local widget = require("widget")
 local cx, cy, sunriseTime, sunsetTime
 local name, temp, main, desc, icon
-local resp, imgIcon, place, bat, bat, btn
+local resp, imgIcon, place, bat, bat, btn, swicthBtn
 local background, date, currentTime
-local tab , l_temp, h_temp, hum, pressu, bgIdex
+local tab , l_temp, h_temp, hum, pressu
+local lang = {"th","en"} , id
 
+--this function decode response from callTranslator()
+local function getResponse( event )
+	if not event.isError then
+		resp = json.decode(event.response)
+		name.text = resp["text"][1]
+		main.text = resp["text"][2]
+		desc.text = resp["text"][3]
+		if lang[id] == "en" then
+			swicthBtn:setLabel( "Thai" )
+			btn:setLabel( "Check" )
+			hum.text = string.gsub( hum.text, "ความชื้น", "Humidity" )
+			pressu.text = string.gsub( pressu.text, "ความดัน", "Pressure" )
+		elseif lang[id] == "th" then
+			swicthBtn:setLabel( "อังกฤษ" )
+			btn:setLabel( "ตรวจสอบ" )
+			hum.text = string.gsub( hum.text, "Humidity", "ความชื้น" )
+			pressu.text = string.gsub( pressu.text, "Pressure", "ความดัน" )
+		end
+	end
+end
+--this function call yandex api to translate language
+local function callTranslator()
+		local apikey = "trnsl.1.1.20170329T185317Z.24f358f17feb356b.5bb984fb80e9f299d24c4b36fa3fdc35cbe9d4d2"
+		network.request(
+		"https://translate.yandex.net/api/v1.5/tr.json/translate?key="..apikey.."&text="
+		..name.text.."&text="..main.text.."&text="..desc.text.."&lang="..lang[id],
+		"GET",
+		getResponse
+		)
+end
+--this function change app language between thai and english
+local function swicthLang( event )
+	if event.phase == "ended" then
+			id = (id % 2) + 1
+			callTranslator()
+	end
+end
 --this function get current time
 local function auTo_Time( )
 	currentTime.text = os.date("%H:%M")
@@ -37,6 +75,7 @@ local function networkResponse( event )
 			imgIcon = display.newImage("icon/"..icon..".png", cx - pos_x, cy - 95)
 			imgIcon.xScale = 1.3
 			imgIcon.yScale = 1.3
+			callTranslator()
 		elseif resp["cod"] == 404 then
 			--don't do anything
 		end
@@ -65,7 +104,7 @@ end
 
 --main
 display.setDefault("background",0,0,0)
-bgIdex = 1
+id = 2
 cx = display.contentCenterX
 cy = display.contentCenterY
 background = display.newImage("icon/1bg.jpg", cx, cy)
@@ -103,6 +142,17 @@ btn = widget.newButton({
 	label = "Check" , font =  "Kristen ITC", fontSize = 15,
 	labelColor = { default={ 1, 1, 1 }, over={ 0, 0, 0, 0.5 } },
 	onEvent = nameListener
+})
+swicthBtn = widget.newButton({
+	x = cx + 115,y = 15,
+	width = 70 , height = 30,
+	shape = "roundedRect",
+	fillColor = {default={0,0,0,0.4},over={0,0,0,0.7}},
+	strokeColor = { default={1,1,1}, over={0,0,0,0.5} },
+    strokeWidth = 2, cornerRadius = 10,
+	label = "Thai" , font =  "Kristen ITC", fontSize = 15,
+	labelColor = { default={ 1, 1, 1 }, over={ 0, 0, 0, 0.5 } },
+	onEvent = swicthLang
 })
 timer.performWithDelay(100, auTo_Time, 0)
 loadWeather()
