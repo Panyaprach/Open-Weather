@@ -16,26 +16,30 @@ end
 local function networkResponse( event )
 	if not event.isError then
 		resp = json.decode(event.response)
-		name.text = resp["name"]
-		temp.text = resp["main"]["temp"].."°C"
-		main.text = resp["weather"][1]["main"]
-		desc.text = resp["weather"][1]["description"]
-		l_temp.text = "L : "..resp["main"]["temp_min"].." °C"
-		h_temp.text = "H : "..resp["main"]["temp_max"].." °C"
-		icon = resp["weather"][1]["icon"]
-		hum.text = "Humidity : "..resp["main"]["humidity"]
-		pressu.text = "Pressure : "..resp["main"]["pressure"]
-		local pos_x = 0
-		if icon == "01n" or icon == "01d" then
-			pos_x = 15
+		if resp["cod"] == 200 then
+			name.text = resp["name"]
+			temp.text = resp["main"]["temp"].."°C"
+			main.text = resp["weather"][1]["main"]
+			desc.text = resp["weather"][1]["description"]
+			l_temp.text = "L : "..resp["main"]["temp_min"].." °C"
+			h_temp.text = "H : "..resp["main"]["temp_max"].." °C"
+			icon = resp["weather"][1]["icon"]
+			hum.text = "Humidity : "..resp["main"]["humidity"]
+			pressu.text = "Pressure : "..resp["main"]["pressure"]
+			local pos_x = 0
+			if icon == "01n" or icon == "01d" then
+				pos_x = 15
+			end
+			if imgIcon then
+				imgIcon:removeSelf()
+				imgIcon = nil
+			end
+			imgIcon = display.newImage("icon/"..icon..".png", cx - pos_x, cy - 95)
+			imgIcon.xScale = 1.3
+			imgIcon.yScale = 1.3
+		elseif resp["cod"] == 404 then
+			--don't do anything
 		end
-		if imgIcon then
-			imgIcon:removeSelf()
-			imgIcon = nil
-		end
-		imgIcon = display.newImage("icon/"..icon..".png", cx - pos_x, cy - 95)
-		imgIcon.xScale = 1.3
-		imgIcon.yScale = 1.3
 	end
 end
 
